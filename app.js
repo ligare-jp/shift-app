@@ -298,7 +298,7 @@ function renderStaffCalendar() {
     const cell = document.createElement("div");
     cell.className = "cal-cell";
     if (dateStr === todayStr) cell.classList.add("today");
-    if (mine && mine.status) cell.classList.add(statusClass(mine.status));
+    if (mine && mine.status && !mine.assigned) cell.classList.add(statusClass(mine.status));
     if (selectedStaffId) {
       cell.classList.add("clickable");
       cell.addEventListener("click", () => openStaffStatusModal(dateStr));
@@ -398,9 +398,6 @@ function openStaffStatusModal(dateStr) {
     <div class="status-choice-grid">
       <button type="button" class="status-choice-btn ${currentStatus === "avail" ? "active" : ""}" data-status="avail">
         ○<span>出勤可能</span>
-      </button>
-      <button type="button" class="status-choice-btn ${currentStatus === "maybe" ? "active" : ""}" data-status="maybe">
-        △<span>時間相談</span>
       </button>
     </div>
     <label class="note-label">
