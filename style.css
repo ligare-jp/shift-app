@@ -536,6 +536,17 @@ select, input[type="text"], input[type="time"] {
 
 .toast.hidden { display: none; }
 
+.deadline-notice {
+  background: #fdf1e2;
+  border: 1px solid var(--accent);
+  color: #8a4b12;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
 .setup-warning {
   background: #fff3e0;
   border: 1px solid #f0c27b;
