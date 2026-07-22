@@ -198,6 +198,11 @@ select, input[type="text"], input[type="time"] {
     font-size: 9px;
     padding: 1px 2px;
   }
+  .badge.time-badge {
+    font-size: 8.5px;
+    padding: 1px 2px;
+    letter-spacing: -0.4px;
+  }
 }
 
 .cal-badges {
@@ -244,6 +249,14 @@ select, input[type="text"], input[type="time"] {
   background: var(--primary);
   color: #fff;
   border: 1px solid var(--primary);
+}
+
+.badge.time-badge {
+  white-space: nowrap;
+  word-break: normal;
+  letter-spacing: -0.3px;
+  font-size: 10px;
+  padding: 1px 3px;
 }
 
 .badge.has-note {

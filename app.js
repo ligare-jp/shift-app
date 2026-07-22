@@ -123,6 +123,11 @@ function showToast(msg) {
   showToast._t = setTimeout(() => toastEl.classList.add("hidden"), 2200);
 }
 
+function shortTime(t) {
+  if (!t) return "?";
+  return t.replace(/^0/, "");
+}
+
 function staffNameById(id) {
   const s = staffList.find(s => s.id === id);
   return s ? s.name : "(不明)";
@@ -317,14 +322,14 @@ function renderStaffCalendar() {
     }
 
     if (mine && mine.assigned) {
-      // アサイン済みの場合は、実際の出勤時間を表示する
+      // アサイン済みの場合は、実際の出勤時間を表示する(1行に収まるよう短縮表記)
       const hasTime = mine.startTime || mine.endTime;
       const timeLabel = hasTime
-        ? `${mine.startTime || "?"}〜${mine.endTime || "?"}`
+        ? `${shortTime(mine.startTime)}-${shortTime(mine.endTime)}`
         : "確定";
       const badges = document.createElement("div");
       badges.className = "cal-badges";
-      badges.innerHTML = `<span class="badge assigned">${escapeHtml(timeLabel)}</span>`;
+      badges.innerHTML = `<span class="badge assigned time-badge">${escapeHtml(timeLabel)}</span>`;
       cell.appendChild(badges);
     }
 
