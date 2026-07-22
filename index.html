@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シフト管理</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>シフト管理</h1>
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="staff">スタッフ用</button>
+    <button class="tab-btn" data-tab="admin">管理者用</button>
+    <button class="tab-btn" data-tab="manage">スタッフ管理</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- スタッフ用: 出勤希望日を入力 -->
+  <section id="tab-staff" class="tab-panel active">
+    <div class="panel-card">
+      <label class="staff-select-label">
+        あなたの名前
+        <select id="staffSelect">
+          <option value="">選択してください</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="calendar-header">
+      <button class="month-nav" id="prevMonthStaff" aria-label="前の月">&#8592;</button>
+      <span class="month-label" id="monthLabelStaff"></span>
+      <button class="month-nav" id="nextMonthStaff" aria-label="次の月">&#8594;</button>
+    </div>
+
+    <div class="calendar-grid" id="calendarStaff"></div>
+    <p class="hint">名前を選んでから日付をクリックすると、出勤希望のON/OFFを切り替えられます。緑色が希望日です。</p>
+  </section>
+
+  <!-- 管理者用: 希望日の確認とアサイン -->
+  <section id="tab-admin" class="tab-panel">
+    <div class="calendar-header">
+      <button class="month-nav" id="prevMonthAdmin" aria-label="前の月">&#8592;</button>
+      <span class="month-label" id="monthLabelAdmin"></span>
+      <button class="month-nav" id="nextMonthAdmin" aria-label="次の月">&#8594;</button>
+    </div>
+
+    <div class="calendar-grid" id="calendarAdmin"></div>
+    <p class="hint">日付をクリックすると、その日の希望者一覧とアサイン設定が開きます。</p>
+  </section>
+
+  <!-- スタッフ管理 -->
+  <section id="tab-manage" class="tab-panel">
+    <div class="panel-card">
+      <h2>スタッフ一覧</h2>
+      <form id="addStaffForm" class="add-staff-form">
+        <input type="text" id="newStaffName" placeholder="スタッフ名を入力" required>
+        <button type="submit">追加</button>
+      </form>
+      <ul id="staffList" class="staff-list"></ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- 日付詳細モーダル(管理者用) -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <button id="modalClose" class="modal-close" aria-label="閉じる">&times;</button>
+    <h3 id="modalDate"></h3>
+    <div id="modalBody" class="modal-body"></div>
+    <div class="modal-actions">
+      <button id="modalSave" class="primary-btn">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
