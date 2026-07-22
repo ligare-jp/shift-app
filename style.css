@@ -251,6 +251,13 @@ select, input[type="text"], input[type="time"] {
   border: 1px solid var(--primary);
 }
 
+.badge.declined {
+  background: #ececea;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  text-decoration: line-through;
+}
+
 .badge.time-badge {
   white-space: nowrap;
   word-break: normal;

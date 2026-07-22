@@ -298,7 +298,9 @@ function renderStaffCalendar() {
   for (let d = 1; d <= lastDay; d++) {
     const dateStr = formatDate(currentYear, currentMonth, d);
     const dayEntries = entriesForDate(dateStr);
-    const mine = selectedStaffId ? dayEntries.find(e => e.staffId === selectedStaffId) : null;
+    const rawMine = selectedStaffId ? dayEntries.find(e => e.staffId === selectedStaffId) : null;
+    // 管理者が「出勤なし」で確定した日は、スタッフ側には何も表示しない
+    const mine = (rawMine && rawMine.declined) ? null : rawMine;
 
     const cell = document.createElement("div");
     cell.className = "cal-cell";
@@ -349,7 +351,7 @@ function renderAdminCalendar() {
 
   for (let d = 1; d <= lastDay; d++) {
     const dateStr = formatDate(currentYear, currentMonth, d);
-    const dayEntries = entriesForDate(dateStr).filter(e => e.status || e.assigned);
+    const dayEntries = entriesForDate(dateStr).filter(e => e.status || e.assigned || e.declined);
 
     const cell = document.createElement("div");
     cell.className = "cal-cell clickable";
@@ -367,10 +369,11 @@ function renderAdminCalendar() {
       badges.innerHTML = dayEntries.slice(0, 4).map(e => {
         const name = staffNameById(e.staffId);
         const short = name.length > 3 ? name.slice(0, 3) : name;
-        const cls = e.assigned ? "assigned" : statusClass(e.status);
+        const cls = e.declined ? "declined" : (e.assigned ? "assigned" : statusClass(e.status));
+        const symbol = e.declined ? "" : statusSymbol(e.status);
         const noteCls = e.note ? "has-note" : "";
         const noteIcon = e.note ? noteIconSvg(9) : "";
-        return `<span class="badge ${cls} ${noteCls}">${statusSymbol(e.status)}${escapeHtml(short)}${noteIcon}</span>`;
+        return `<span class="badge ${cls} ${noteCls}">${symbol}${escapeHtml(short)}${noteIcon}</span>`;
       }).join("");
       cell.appendChild(badges);
     }
@@ -465,6 +468,8 @@ async function setMyStatus(dateStr, status, note) {
       status: status || null,
       note: noteVal,
       assigned: existing ? !!existing.assigned : false,
+      // あらためて希望を出した場合は、管理者の「見送り」判断をリセットする
+      declined: false,
       startTime: existing ? (existing.startTime || "") : "",
       endTime: existing ? (existing.endTime || "") : ""
     }, { merge: true });
@@ -491,6 +496,7 @@ function openDayModal(dateStr) {
       const e = dayEntries.find(en => en.staffId === s.id);
       const status = e ? e.status : null;
       const assigned = !!(e && e.assigned);
+      const declined = !!(e && e.declined);
       const start = (e && e.startTime) || "";
       const end = (e && e.endTime) || "";
       const note = (e && e.note) || "";
@@ -507,14 +513,33 @@ function openDayModal(dateStr) {
             〜
             <input type="time" class="end-time" value="${end}">
           </span>
-          ${note ? `<div class="staff-note">${noteIconSvg(13)} ${escapeHtml(note)}</div>` : ""}
+          <label>
+            <input type="checkbox" class="decline-check" ${declined ? "checked" : ""}>
+            見送り(出勤なし)
+          </label>
         </div>
+        ${note ? `<div class="staff-note" style="margin:-2px 0 8px;">${noteIconSvg(13)} ${escapeHtml(note)}</div>` : ""}
       `;
     }).join("");
 
     modalBody.querySelectorAll(".assign-check").forEach(cb => {
       cb.addEventListener("change", (e) => {
-        e.target.closest(".modal-row").classList.toggle("assign-on", e.target.checked);
+        const row = e.target.closest(".modal-row");
+        row.classList.toggle("assign-on", e.target.checked);
+        if (e.target.checked) {
+          row.querySelector(".decline-check").checked = false;
+        }
+      });
+    });
+
+    modalBody.querySelectorAll(".decline-check").forEach(cb => {
+      cb.addEventListener("change", (e) => {
+        const row = e.target.closest(".modal-row");
+        if (e.target.checked) {
+          const assignCb = row.querySelector(".assign-check");
+          assignCb.checked = false;
+          row.classList.remove("assign-on");
+        }
       });
     });
   }
@@ -554,6 +579,7 @@ modalSave.addEventListener("click", async () => {
   rows.forEach(row => {
     const staffId = row.dataset.staff;
     const assigned = row.querySelector(".assign-check").checked;
+    const declined = row.querySelector(".decline-check").checked;
     const startTime = row.querySelector(".start-time").value;
     const endTime = row.querySelector(".end-time").value;
     const existing = entriesForDate(dateStr).find(en => en.staffId === staffId);
@@ -562,7 +588,7 @@ modalSave.addEventListener("click", async () => {
     const docId = `${staffId}__${dateStr}`;
     const ref = doc(db, "shiftEntries", docId);
 
-    if (!assigned && !status && !note) {
+    if (!assigned && !declined && !status && !note) {
       if (existing) batch.delete(ref);
       return;
     }
@@ -574,6 +600,7 @@ modalSave.addEventListener("click", async () => {
       status: status || null,
       note,
       assigned,
+      declined,
       startTime: assigned ? startTime : "",
       endTime: assigned ? endTime : ""
     }, { merge: false });
