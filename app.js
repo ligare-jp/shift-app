@@ -393,38 +393,50 @@ function openStaffStatusModal(dateStr) {
   modalMode = "staff";
   modalDateStr = dateStr;
   const [y, m, d] = dateStr.split("-").map(Number);
-  modalDate.textContent = `${y}年${m}月${d}日 のご希望`;
+  modalDate.textContent = `${y}年${m}月${d}日`;
 
   const existing = monthEntries.find(e => e.id === `${selectedStaffId}__${dateStr}`);
   const currentStatus = existing ? existing.status : null;
   const currentNote = existing ? (existing.note || "") : "";
 
-  modalBody.innerHTML = `
-    <div class="status-choice-grid">
-      <button type="button" class="status-choice-btn ${currentStatus === "avail" ? "active" : ""}" data-status="avail">
-        ○<span>出勤可能</span>
-      </button>
-    </div>
-    <label class="note-label">
-      希望の時間帯や伝えたいこと(任意)
-      <textarea id="staffNoteInput" class="note-textarea" placeholder="例: 15時以降なら出勤できます / 〇〇の予定があるので相談したいです">${escapeHtml(currentNote)}</textarea>
-    </label>
-    ${(currentStatus || currentNote) ? `<button type="button" class="clear-status-btn" id="clearStatusBtn">選択を取り消す</button>` : ""}
-    ${existing && existing.assigned ? `<p class="hint">この日はすでにアサイン(確定)されています。変更するとアサインに影響する場合があります。</p>` : ""}
-  `;
+  if (existing && existing.assigned) {
+    // アサイン確定済みの日は、希望の入力ではなく勤務時間を表示する
+    const hasTime = existing.startTime || existing.endTime;
+    const timeText = hasTime ? `${shortTime(existing.startTime)}-${shortTime(existing.endTime)}` : "確定";
+    modalBody.innerHTML = `
+      <p class="assigned-time-display">${escapeHtml(timeText)}</p>
+      ${currentNote ? `<div class="staff-note">${noteIconSvg(13)} ${escapeHtml(currentNote)}</div>` : ""}
+      <p class="hint">この日の勤務時間はアサイン(確定)済みです。</p>
+    `;
+    modalActions.classList.add("hidden");
+  } else {
+    modalBody.innerHTML = `
+      <div class="status-choice-grid">
+        <button type="button" class="status-choice-btn ${currentStatus === "avail" ? "active" : ""}" data-status="avail">
+          ○<span>出勤可能</span>
+        </button>
+      </div>
+      <label class="note-label">
+        希望の時間帯や伝えたいこと(任意)
+        <textarea id="staffNoteInput" class="note-textarea" placeholder="例: 15時以降なら出勤できます / 〇〇の予定があるので相談したいです">${escapeHtml(currentNote)}</textarea>
+      </label>
+      ${(currentStatus || currentNote) ? `<button type="button" class="clear-status-btn" id="clearStatusBtn">選択を取り消す</button>` : ""}
+    `;
 
-  modalBody.querySelectorAll(".status-choice-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const alreadyActive = btn.classList.contains("active");
-      modalBody.querySelectorAll(".status-choice-btn").forEach(b => b.classList.remove("active"));
-      if (!alreadyActive) btn.classList.add("active");
+    modalBody.querySelectorAll(".status-choice-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const alreadyActive = btn.classList.contains("active");
+        modalBody.querySelectorAll(".status-choice-btn").forEach(b => b.classList.remove("active"));
+        if (!alreadyActive) btn.classList.add("active");
+      });
     });
-  });
 
-  const clearBtn = document.getElementById("clearStatusBtn");
-  if (clearBtn) clearBtn.addEventListener("click", () => setMyStatus(dateStr, null, ""));
+    const clearBtn = document.getElementById("clearStatusBtn");
+    if (clearBtn) clearBtn.addEventListener("click", () => setMyStatus(dateStr, null, ""));
 
-  modalActions.classList.remove("hidden");
+    modalActions.classList.remove("hidden");
+  }
+
   modalOverlay.classList.remove("hidden");
 }
 

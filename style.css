@@ -269,6 +269,14 @@ select, input[type="text"], input[type="time"] {
   flex-shrink: 0;
 }
 
+.assigned-time-display {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 6px 0 14px;
+}
+
 .status-choice-grid {
   display: grid;
   grid-template-columns: 1fr;
