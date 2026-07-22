@@ -399,9 +399,6 @@ function openStaffStatusModal(dateStr) {
       <button type="button" class="status-choice-btn ${currentStatus === "avail" ? "active" : ""}" data-status="avail">
         ○<span>出勤可能</span>
       </button>
-      <button type="button" class="status-choice-btn ${currentStatus === "unavail" ? "active" : ""}" data-status="unavail">
-        ×<span>出勤不可</span>
-      </button>
       <button type="button" class="status-choice-btn ${currentStatus === "maybe" ? "active" : ""}" data-status="maybe">
         △<span>時間相談</span>
       </button>
