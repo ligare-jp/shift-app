@@ -309,7 +309,7 @@ function renderStaffCalendar() {
     dateEl.textContent = d;
     cell.appendChild(dateEl);
 
-    if (mine && mine.status) {
+    if (mine && mine.status && !mine.assigned) {
       const symbolEl = document.createElement("div");
       symbolEl.className = "cal-status-symbol";
       symbolEl.textContent = statusSymbol(mine.status);
