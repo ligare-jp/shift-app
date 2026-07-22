@@ -128,6 +128,10 @@ function staffNameById(id) {
   return s ? s.name : "(不明)";
 }
 
+function noteIconSvg(size) {
+  return `<svg class="note-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+}
+
 // --------------------------------------------------------------
 // タブ切り替え(管理者用タブはPINで保護。スタッフ管理も管理者用タブ内にあるため
 // 同じ保護がかかる)
@@ -359,7 +363,9 @@ function renderAdminCalendar() {
         const name = staffNameById(e.staffId);
         const short = name.length > 3 ? name.slice(0, 3) : name;
         const cls = e.assigned ? "assigned" : statusClass(e.status);
-        return `<span class="badge ${cls}">${statusSymbol(e.status)}${escapeHtml(short)}</span>`;
+        const noteCls = e.note ? "has-note" : "";
+        const noteIcon = e.note ? noteIconSvg(9) : "";
+        return `<span class="badge ${cls} ${noteCls}">${statusSymbol(e.status)}${escapeHtml(short)}${noteIcon}</span>`;
       }).join("");
       cell.appendChild(badges);
     }
@@ -386,6 +392,7 @@ function openStaffStatusModal(dateStr) {
 
   const existing = monthEntries.find(e => e.id === `${selectedStaffId}__${dateStr}`);
   const currentStatus = existing ? existing.status : null;
+  const currentNote = existing ? (existing.note || "") : "";
 
   modalBody.innerHTML = `
     <div class="status-choice-grid">
@@ -399,30 +406,40 @@ function openStaffStatusModal(dateStr) {
         △<span>時間相談</span>
       </button>
     </div>
-    ${currentStatus ? `<button type="button" class="clear-status-btn" id="clearStatusBtn">選択を取り消す</button>` : ""}
+    <label class="note-label">
+      希望の時間帯や伝えたいこと(任意)
+      <textarea id="staffNoteInput" class="note-textarea" placeholder="例: 15時以降なら出勤できます / 〇〇の予定があるので相談したいです">${escapeHtml(currentNote)}</textarea>
+    </label>
+    ${(currentStatus || currentNote) ? `<button type="button" class="clear-status-btn" id="clearStatusBtn">選択を取り消す</button>` : ""}
     ${existing && existing.assigned ? `<p class="hint">この日はすでにアサイン(確定)されています。変更するとアサインに影響する場合があります。</p>` : ""}
   `;
 
   modalBody.querySelectorAll(".status-choice-btn").forEach(btn => {
-    btn.addEventListener("click", () => setMyStatus(dateStr, btn.dataset.status));
+    btn.addEventListener("click", () => {
+      const alreadyActive = btn.classList.contains("active");
+      modalBody.querySelectorAll(".status-choice-btn").forEach(b => b.classList.remove("active"));
+      if (!alreadyActive) btn.classList.add("active");
+    });
   });
-  const clearBtn = document.getElementById("clearStatusBtn");
-  if (clearBtn) clearBtn.addEventListener("click", () => setMyStatus(dateStr, null));
 
-  modalActions.classList.add("hidden");
+  const clearBtn = document.getElementById("clearStatusBtn");
+  if (clearBtn) clearBtn.addEventListener("click", () => setMyStatus(dateStr, null, ""));
+
+  modalActions.classList.remove("hidden");
   modalOverlay.classList.remove("hidden");
 }
 
-async function setMyStatus(dateStr, status) {
+async function setMyStatus(dateStr, status, note) {
   if (!selectedStaffId) return;
   const docId = `${selectedStaffId}__${dateStr}`;
   const existing = monthEntries.find(e => e.id === docId);
   const ref = doc(db, "shiftEntries", docId);
+  const noteVal = (note || "").trim();
 
-  if (status === null) {
+  if (!status && !noteVal) {
     if (existing && existing.assigned) {
       if (!window.confirm("この日はすでにアサイン(確定)されています。選択を取り消しますか?")) return;
-      await setDoc(ref, { ...existing, status: null }, { merge: true });
+      await setDoc(ref, { ...existing, status: null, note: "" }, { merge: true });
     } else if (existing) {
       await deleteDoc(ref);
     }
@@ -434,7 +451,8 @@ async function setMyStatus(dateStr, status) {
       staffId: selectedStaffId,
       staffName: staffNameById(selectedStaffId),
       date: dateStr,
-      status,
+      status: status || null,
+      note: noteVal,
       assigned: existing ? !!existing.assigned : false,
       startTime: existing ? (existing.startTime || "") : "",
       endTime: existing ? (existing.endTime || "") : ""
@@ -442,6 +460,7 @@ async function setMyStatus(dateStr, status) {
   }
 
   closeModal();
+  showToast("保存しました");
 }
 
 // --------------------------------------------------------------
@@ -463,6 +482,7 @@ function openDayModal(dateStr) {
       const assigned = !!(e && e.assigned);
       const start = (e && e.startTime) || "";
       const end = (e && e.endTime) || "";
+      const note = (e && e.note) || "";
       return `
         <div class="modal-row ${assigned ? "assign-on" : ""}" data-staff="${s.id}">
           <span class="staff-name">${escapeHtml(s.name)}</span>
@@ -476,6 +496,7 @@ function openDayModal(dateStr) {
             〜
             <input type="time" class="end-time" value="${end}">
           </span>
+          ${note ? `<div class="staff-note">${noteIconSvg(13)} ${escapeHtml(note)}</div>` : ""}
         </div>
       `;
     }).join("");
@@ -503,7 +524,18 @@ modalOverlay.addEventListener("click", (e) => {
 });
 
 modalSave.addEventListener("click", async () => {
-  if (modalMode !== "admin" || !modalDateStr) return;
+  if (!modalDateStr) return;
+
+  if (modalMode === "staff") {
+    const activeBtn = modalBody.querySelector(".status-choice-btn.active");
+    const status = activeBtn ? activeBtn.dataset.status : null;
+    const noteInput = document.getElementById("staffNoteInput");
+    const note = noteInput ? noteInput.value : "";
+    await setMyStatus(modalDateStr, status, note);
+    return;
+  }
+
+  if (modalMode !== "admin") return;
   const rows = modalBody.querySelectorAll(".modal-row");
   const batch = writeBatch(db);
   const dateStr = modalDateStr;
@@ -515,10 +547,11 @@ modalSave.addEventListener("click", async () => {
     const endTime = row.querySelector(".end-time").value;
     const existing = entriesForDate(dateStr).find(en => en.staffId === staffId);
     const status = existing ? existing.status : null;
+    const note = existing ? (existing.note || "") : "";
     const docId = `${staffId}__${dateStr}`;
     const ref = doc(db, "shiftEntries", docId);
 
-    if (!assigned && !status) {
+    if (!assigned && !status && !note) {
       if (existing) batch.delete(ref);
       return;
     }
@@ -528,6 +561,7 @@ modalSave.addEventListener("click", async () => {
       staffName: staffNameById(staffId),
       date: dateStr,
       status: status || null,
+      note,
       assigned,
       startTime: assigned ? startTime : "",
       endTime: assigned ? endTime : ""

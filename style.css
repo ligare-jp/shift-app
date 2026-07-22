@@ -218,6 +218,16 @@ select, input[type="text"], input[type="time"] {
   border: 1px solid var(--primary);
 }
 
+.badge.has-note {
+  padding-right: 4px;
+}
+
+.note-icon {
+  vertical-align: -1px;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
 .status-choice-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -261,6 +271,38 @@ select, input[type="text"], input[type="time"] {
   cursor: pointer;
   font-size: 13px;
   padding: 6px 0;
+}
+
+.note-label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 4px 0 10px;
+}
+
+.note-textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+  color: var(--text);
+}
+
+.staff-note {
+  width: 100%;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-top: 6px;
+  line-height: 1.5;
 }
 
 .hint {
