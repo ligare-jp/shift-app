@@ -120,14 +120,15 @@ function staffNameById(id) {
 }
 
 // --------------------------------------------------------------
-// タブ切り替え
+// タブ切り替え(管理者用タブはPINで保護。スタッフ管理も管理者用タブ内にあるため
+// 同じ保護がかかる)
 // --------------------------------------------------------------
 tabsNav.addEventListener("click", (e) => {
   const btn = e.target.closest(".tab-btn");
   if (!btn) return;
   const tab = btn.dataset.tab;
 
-  if ((tab === "admin" || tab === "manage") && !isAdminUnlocked) {
+  if (tab === "admin" && !isAdminUnlocked) {
     const pin = window.prompt("管理者用の暗証番号(PIN)を入力してください");
     if (pin === null) return;
     if (pin !== ADMIN_PIN) {
@@ -168,7 +169,7 @@ staffSelect.addEventListener("change", () => {
 });
 
 // --------------------------------------------------------------
-// スタッフ管理: 追加・削除
+// スタッフ管理: 追加・削除(管理者用タブ内)
 // --------------------------------------------------------------
 addStaffForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -259,7 +260,6 @@ function buildCalendarSkeleton(container) {
 }
 
 function renderAll() {
-  const { lastDay } = monthRange(currentYear, currentMonth);
   const label = `${currentYear}年 ${currentMonth + 1}月`;
   monthLabelStaff.textContent = label;
   monthLabelAdmin.textContent = label;
@@ -297,9 +297,14 @@ function renderStaffCalendar() {
     cell.appendChild(dateEl);
 
     if (mine && mine.assigned) {
+      // アサイン済みの場合は「確定」ではなく、実際の出勤時間を表示する
+      const hasTime = mine.startTime || mine.endTime;
+      const timeLabel = hasTime
+        ? `${mine.startTime || "?"}〜${mine.endTime || "?"}`
+        : "確定";
       const badges = document.createElement("div");
       badges.className = "cal-badges";
-      badges.innerHTML = `<span class="badge assigned">確定</span>`;
+      badges.innerHTML = `<span class="badge assigned">${escapeHtml(timeLabel)}</span>`;
       cell.appendChild(badges);
     }
 
@@ -393,7 +398,7 @@ function openDayModal(dateStr) {
   modalDate.textContent = `${y}年${m}月${d}日 のシフト`;
 
   if (staffList.length === 0) {
-    modalBody.innerHTML = `<p style="color:var(--muted);">スタッフが登録されていません。先に「スタッフ管理」から登録してください。</p>`;
+    modalBody.innerHTML = `<p style="color:var(--muted);">スタッフが登録されていません。下の「スタッフの追加・削除」から登録してください。</p>`;
   } else {
     const dayEntries = entriesForDate(dateStr);
     modalBody.innerHTML = staffList.map(s => {

@@ -189,6 +189,21 @@ select, input[type="text"], input[type="time"] {
   line-height: 1.6;
 }
 
+.staff-manage-details {
+  margin-top: 4px;
+}
+
+.staff-manage-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  list-style: revert;
+}
+
+.staff-manage-details[open] summary {
+  margin-bottom: 12px;
+}
+
 .add-staff-form {
   display: flex;
   gap: 8px;

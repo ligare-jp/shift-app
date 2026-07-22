@@ -13,7 +13,6 @@
   <nav class="tabs" id="tabs">
     <button class="tab-btn active" data-tab="staff">スタッフ用</button>
     <button class="tab-btn" data-tab="admin">管理者用</button>
-    <button class="tab-btn" data-tab="manage">スタッフ管理</button>
   </nav>
 </header>
 
@@ -37,10 +36,10 @@
     </div>
 
     <div class="calendar-grid" id="calendarStaff"></div>
-    <p class="hint">名前を選んでから日付をクリックすると、出勤希望のON/OFFを切り替えられます。緑色が希望日です。</p>
+    <p class="hint">名前を選んでから日付をクリックすると、出勤希望のON/OFFを切り替えられます。緑色が希望日です。アサイン(勤務時間)が確定している日は、その時間が表示されます。</p>
   </section>
 
-  <!-- 管理者用: 希望日の確認とアサイン -->
+  <!-- 管理者用: 希望日の確認・アサイン・スタッフ管理 -->
   <section id="tab-admin" class="tab-panel">
     <div class="calendar-header">
       <button class="month-nav" id="prevMonthAdmin" aria-label="前の月">&#8592;</button>
@@ -50,18 +49,15 @@
 
     <div class="calendar-grid" id="calendarAdmin"></div>
     <p class="hint">日付をクリックすると、その日の希望者一覧とアサイン設定が開きます。</p>
-  </section>
 
-  <!-- スタッフ管理 -->
-  <section id="tab-manage" class="tab-panel">
-    <div class="panel-card">
-      <h2>スタッフ一覧</h2>
+    <details class="panel-card staff-manage-details">
+      <summary>スタッフの追加・削除</summary>
       <form id="addStaffForm" class="add-staff-form">
         <input type="text" id="newStaffName" placeholder="スタッフ名を入力" required>
         <button type="submit">追加</button>
       </form>
       <ul id="staffList" class="staff-list"></ul>
-    </div>
+    </details>
   </section>
 
 </main>
