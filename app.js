@@ -86,10 +86,19 @@ const modalDate = document.getElementById("modalDate");
 const modalBody = document.getElementById("modalBody");
 const modalClose = document.getElementById("modalClose");
 const modalSave = document.getElementById("modalSave");
+const modalActions = document.getElementById("modalActions");
 
 const toastEl = document.getElementById("toast");
 
 let modalDateStr = null;
+let modalMode = null; // "staff" or "admin"
+
+const STATUS_SYMBOL = { avail: "○", unavail: "×", maybe: "△" };
+const STATUS_LABEL = { avail: "出勤可能", unavail: "出勤不可", maybe: "時間相談" };
+
+function statusSymbol(status) { return STATUS_SYMBOL[status] || ""; }
+function statusLabel(status) { return STATUS_LABEL[status] || "未回答"; }
+function statusClass(status) { return status ? `status-${status}` : ""; }
 
 // --------------------------------------------------------------
 // ユーティリティ
@@ -285,10 +294,10 @@ function renderStaffCalendar() {
     const cell = document.createElement("div");
     cell.className = "cal-cell";
     if (dateStr === todayStr) cell.classList.add("today");
-    if (mine && mine.requested) cell.classList.add("requested");
+    if (mine && mine.status) cell.classList.add(statusClass(mine.status));
     if (selectedStaffId) {
       cell.classList.add("clickable");
-      cell.addEventListener("click", () => toggleMyRequest(dateStr));
+      cell.addEventListener("click", () => openStaffStatusModal(dateStr));
     }
 
     const dateEl = document.createElement("div");
@@ -296,8 +305,15 @@ function renderStaffCalendar() {
     dateEl.textContent = d;
     cell.appendChild(dateEl);
 
+    if (mine && mine.status) {
+      const symbolEl = document.createElement("div");
+      symbolEl.className = "cal-status-symbol";
+      symbolEl.textContent = statusSymbol(mine.status);
+      cell.appendChild(symbolEl);
+    }
+
     if (mine && mine.assigned) {
-      // アサイン済みの場合は「確定」ではなく、実際の出勤時間を表示する
+      // アサイン済みの場合は、実際の出勤時間を表示する
       const hasTime = mine.startTime || mine.endTime;
       const timeLabel = hasTime
         ? `${mine.startTime || "?"}〜${mine.endTime || "?"}`
@@ -324,7 +340,7 @@ function renderAdminCalendar() {
 
   for (let d = 1; d <= lastDay; d++) {
     const dateStr = formatDate(currentYear, currentMonth, d);
-    const dayEntries = entriesForDate(dateStr).filter(e => e.requested || e.assigned);
+    const dayEntries = entriesForDate(dateStr).filter(e => e.status || e.assigned);
 
     const cell = document.createElement("div");
     cell.className = "cal-cell clickable";
@@ -342,7 +358,8 @@ function renderAdminCalendar() {
       badges.innerHTML = dayEntries.slice(0, 4).map(e => {
         const name = staffNameById(e.staffId);
         const short = name.length > 3 ? name.slice(0, 3) : name;
-        return `<span class="badge ${e.assigned ? "assigned" : ""}">${escapeHtml(short)}</span>`;
+        const cls = e.assigned ? "assigned" : statusClass(e.status);
+        return `<span class="badge ${cls}">${statusSymbol(e.status)}${escapeHtml(short)}</span>`;
       }).join("");
       cell.appendChild(badges);
     }
@@ -358,41 +375,80 @@ function emptyCell() {
 }
 
 // --------------------------------------------------------------
-// スタッフ用: 出勤希望のON/OFF切り替え
+// スタッフ用: ○/×/△ の選択モーダル
 // --------------------------------------------------------------
-async function toggleMyRequest(dateStr) {
+function openStaffStatusModal(dateStr) {
+  if (!selectedStaffId) return;
+  modalMode = "staff";
+  modalDateStr = dateStr;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  modalDate.textContent = `${y}年${m}月${d}日 のご希望`;
+
+  const existing = monthEntries.find(e => e.id === `${selectedStaffId}__${dateStr}`);
+  const currentStatus = existing ? existing.status : null;
+
+  modalBody.innerHTML = `
+    <div class="status-choice-grid">
+      <button type="button" class="status-choice-btn ${currentStatus === "avail" ? "active" : ""}" data-status="avail">
+        ○<span>出勤可能</span>
+      </button>
+      <button type="button" class="status-choice-btn ${currentStatus === "unavail" ? "active" : ""}" data-status="unavail">
+        ×<span>出勤不可</span>
+      </button>
+      <button type="button" class="status-choice-btn ${currentStatus === "maybe" ? "active" : ""}" data-status="maybe">
+        △<span>時間相談</span>
+      </button>
+    </div>
+    ${currentStatus ? `<button type="button" class="clear-status-btn" id="clearStatusBtn">選択を取り消す</button>` : ""}
+    ${existing && existing.assigned ? `<p class="hint">この日はすでにアサイン(確定)されています。変更するとアサインに影響する場合があります。</p>` : ""}
+  `;
+
+  modalBody.querySelectorAll(".status-choice-btn").forEach(btn => {
+    btn.addEventListener("click", () => setMyStatus(dateStr, btn.dataset.status));
+  });
+  const clearBtn = document.getElementById("clearStatusBtn");
+  if (clearBtn) clearBtn.addEventListener("click", () => setMyStatus(dateStr, null));
+
+  modalActions.classList.add("hidden");
+  modalOverlay.classList.remove("hidden");
+}
+
+async function setMyStatus(dateStr, status) {
   if (!selectedStaffId) return;
   const docId = `${selectedStaffId}__${dateStr}`;
   const existing = monthEntries.find(e => e.id === docId);
   const ref = doc(db, "shiftEntries", docId);
 
-  if (existing && existing.requested) {
-    // 希望を取り消す
-    if (existing.assigned) {
-      if (!window.confirm("この日はすでにアサイン(確定)されています。希望を取り消しますか?")) return;
-    }
-    if (!existing.assigned) {
+  if (status === null) {
+    if (existing && existing.assigned) {
+      if (!window.confirm("この日はすでにアサイン(確定)されています。選択を取り消しますか?")) return;
+      await setDoc(ref, { ...existing, status: null }, { merge: true });
+    } else if (existing) {
       await deleteDoc(ref);
-    } else {
-      await setDoc(ref, { ...existing, requested: false }, { merge: true });
     }
   } else {
+    if (existing && existing.assigned && status === "unavail") {
+      if (!window.confirm("この日はすでにアサイン(確定)されています。「出勤不可」に変更しますか?")) return;
+    }
     await setDoc(ref, {
       staffId: selectedStaffId,
       staffName: staffNameById(selectedStaffId),
       date: dateStr,
-      requested: true,
+      status,
       assigned: existing ? !!existing.assigned : false,
       startTime: existing ? (existing.startTime || "") : "",
       endTime: existing ? (existing.endTime || "") : ""
     }, { merge: true });
   }
+
+  closeModal();
 }
 
 // --------------------------------------------------------------
 // 管理者用: 日付詳細モーダル
 // --------------------------------------------------------------
 function openDayModal(dateStr) {
+  modalMode = "admin";
   modalDateStr = dateStr;
   const [y, m, d] = dateStr.split("-").map(Number);
   modalDate.textContent = `${y}年${m}月${d}日 のシフト`;
@@ -403,14 +459,14 @@ function openDayModal(dateStr) {
     const dayEntries = entriesForDate(dateStr);
     modalBody.innerHTML = staffList.map(s => {
       const e = dayEntries.find(en => en.staffId === s.id);
-      const requested = !!(e && e.requested);
+      const status = e ? e.status : null;
       const assigned = !!(e && e.assigned);
       const start = (e && e.startTime) || "";
       const end = (e && e.endTime) || "";
       return `
         <div class="modal-row ${assigned ? "assign-on" : ""}" data-staff="${s.id}">
           <span class="staff-name">${escapeHtml(s.name)}</span>
-          <label>${requested ? "出勤希望あり" : "希望なし"}</label>
+          <label>${statusSymbol(status)} ${statusLabel(status)}</label>
           <label>
             <input type="checkbox" class="assign-check" ${assigned ? "checked" : ""}>
             アサイン
@@ -431,12 +487,14 @@ function openDayModal(dateStr) {
     });
   }
 
+  modalActions.classList.remove("hidden");
   modalOverlay.classList.remove("hidden");
 }
 
 function closeModal() {
   modalOverlay.classList.add("hidden");
   modalDateStr = null;
+  modalMode = null;
 }
 
 modalClose.addEventListener("click", closeModal);
@@ -445,7 +503,7 @@ modalOverlay.addEventListener("click", (e) => {
 });
 
 modalSave.addEventListener("click", async () => {
-  if (!modalDateStr) return;
+  if (modalMode !== "admin" || !modalDateStr) return;
   const rows = modalBody.querySelectorAll(".modal-row");
   const batch = writeBatch(db);
   const dateStr = modalDateStr;
@@ -456,11 +514,11 @@ modalSave.addEventListener("click", async () => {
     const startTime = row.querySelector(".start-time").value;
     const endTime = row.querySelector(".end-time").value;
     const existing = entriesForDate(dateStr).find(en => en.staffId === staffId);
-    const requested = !!(existing && existing.requested);
+    const status = existing ? existing.status : null;
     const docId = `${staffId}__${dateStr}`;
     const ref = doc(db, "shiftEntries", docId);
 
-    if (!assigned && !requested) {
+    if (!assigned && !status) {
       if (existing) batch.delete(ref);
       return;
     }
@@ -469,7 +527,7 @@ modalSave.addEventListener("click", async () => {
       staffId,
       staffName: staffNameById(staffId),
       date: dateStr,
-      requested,
+      status: status || null,
       assigned,
       startTime: assigned ? startTime : "",
       endTime: assigned ? endTime : ""

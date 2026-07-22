@@ -158,9 +158,26 @@ select, input[type="text"], input[type="time"] {
   color: var(--accent);
 }
 
-.cal-cell.requested {
+.cal-cell.status-avail {
   background: var(--primary-light);
   border-color: var(--primary);
+}
+
+.cal-cell.status-unavail {
+  background: #f7eaea;
+  border-color: var(--danger);
+}
+
+.cal-cell.status-maybe {
+  background: #fdf1e2;
+  border-color: var(--accent);
+}
+
+.cal-status-symbol {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .cal-badges {
@@ -177,9 +194,73 @@ select, input[type="text"], input[type="time"] {
   color: var(--muted);
 }
 
+.badge.status-avail {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.badge.status-unavail {
+  background: #f7eaea;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.badge.status-maybe {
+  background: #fdf1e2;
+  color: #a85b1e;
+  border: 1px solid var(--accent);
+}
+
 .badge.assigned {
   background: var(--primary);
   color: #fff;
+  border: 1px solid var(--primary);
+}
+
+.status-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.status-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.status-choice-btn span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.status-choice-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.clear-status-btn {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 0;
 }
 
 .hint {
@@ -325,6 +406,10 @@ select, input[type="text"], input[type="time"] {
 .modal-actions {
   margin-top: 14px;
   text-align: right;
+}
+
+.modal-actions.hidden {
+  display: none;
 }
 
 .primary-btn {

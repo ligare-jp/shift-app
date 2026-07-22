@@ -36,7 +36,7 @@
     </div>
 
     <div class="calendar-grid" id="calendarStaff"></div>
-    <p class="hint">名前を選んでから日付をクリックすると、出勤希望のON/OFFを切り替えられます。緑色が希望日です。アサイン(勤務時間)が確定している日は、その時間が表示されます。</p>
+    <p class="hint">名前を選んでから日付をクリックすると、○(出勤可能)・×(出勤不可)・△(時間相談)を選べます。アサイン(勤務時間)が確定している日は、その時間が表示されます。</p>
   </section>
 
   <!-- 管理者用: 希望日の確認・アサイン・スタッフ管理 -->
@@ -68,7 +68,7 @@
     <button id="modalClose" class="modal-close" aria-label="閉じる">&times;</button>
     <h3 id="modalDate"></h3>
     <div id="modalBody" class="modal-body"></div>
-    <div class="modal-actions">
+    <div class="modal-actions" id="modalActions">
       <button id="modalSave" class="primary-btn">保存</button>
     </div>
   </div>
