@@ -542,11 +542,26 @@ select, input[type="text"], input[type="time"] {
 
 .modal-row .time-inputs {
   display: none;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.modal-row.assign-on .time-inputs {
+  display: flex;
+}
+
+.time-preset {
+  width: 100%;
+}
+
+.custom-time-inputs {
+  display: none;
   gap: 6px;
   align-items: center;
 }
 
-.modal-row.assign-on .time-inputs {
+.custom-time-inputs.show {
   display: flex;
 }
 

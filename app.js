@@ -106,6 +106,9 @@ let modalMode = null; // "staff" or "admin"
 const STATUS_SYMBOL = { avail: "○", unavail: "×", maybe: "△" };
 const STATUS_LABEL = { avail: "出勤可能", unavail: "出勤不可", maybe: "時間相談" };
 
+// 勤務時間のプリセット(基本の2パターン)。それ以外は「その他」で自由入力する。
+const TIME_PRESETS = ["08:30-14:00", "14:45-20:00"];
+
 function statusSymbol(status) { return STATUS_SYMBOL[status] || ""; }
 function statusLabel(status) { return STATUS_LABEL[status] || "未回答"; }
 function statusClass(status) { return status ? `status-${status}` : ""; }
@@ -603,6 +606,9 @@ function openDayModal(dateStr) {
       const start = (e && e.startTime) || "";
       const end = (e && e.endTime) || "";
       const note = (e && e.note) || "";
+      const timeKey = (start && end) ? `${start}-${end}` : "";
+      const isPreset = TIME_PRESETS.includes(timeKey);
+      const presetValue = isPreset ? timeKey : (start || end ? "custom" : TIME_PRESETS[0]);
       return `
         <div class="modal-row ${assigned ? "assign-on" : ""}" data-staff="${s.id}">
           <span class="staff-name">${escapeHtml(s.name)}</span>
@@ -612,9 +618,16 @@ function openDayModal(dateStr) {
             アサイン
           </label>
           <span class="time-inputs">
-            <input type="time" class="start-time" value="${start}">
-            〜
-            <input type="time" class="end-time" value="${end}">
+            <select class="time-preset">
+              <option value="08:30-14:00" ${presetValue === "08:30-14:00" ? "selected" : ""}>8:30-14:00</option>
+              <option value="14:45-20:00" ${presetValue === "14:45-20:00" ? "selected" : ""}>14:45-20:00</option>
+              <option value="custom" ${presetValue === "custom" ? "selected" : ""}>その他(時間を指定)</option>
+            </select>
+            <span class="custom-time-inputs ${presetValue === "custom" ? "show" : ""}">
+              <input type="time" class="start-time" value="${start}">
+              〜
+              <input type="time" class="end-time" value="${end}">
+            </span>
           </span>
           <label>
             <input type="checkbox" class="decline-check" ${declined ? "checked" : ""}>
@@ -643,6 +656,13 @@ function openDayModal(dateStr) {
           assignCb.checked = false;
           row.classList.remove("assign-on");
         }
+      });
+    });
+
+    modalBody.querySelectorAll(".time-preset").forEach(sel => {
+      sel.addEventListener("change", (e) => {
+        const row = e.target.closest(".modal-row");
+        row.querySelector(".custom-time-inputs").classList.toggle("show", e.target.value === "custom");
       });
     });
   }
@@ -683,8 +703,14 @@ modalSave.addEventListener("click", async () => {
     const staffId = row.dataset.staff;
     const assigned = row.querySelector(".assign-check").checked;
     const declined = row.querySelector(".decline-check").checked;
-    const startTime = row.querySelector(".start-time").value;
-    const endTime = row.querySelector(".end-time").value;
+    const presetValue = row.querySelector(".time-preset").value;
+    let startTime, endTime;
+    if (presetValue === "custom") {
+      startTime = row.querySelector(".start-time").value;
+      endTime = row.querySelector(".end-time").value;
+    } else {
+      [startTime, endTime] = presetValue.split("-");
+    }
     const existing = entriesForDate(dateStr).find(en => en.staffId === staffId);
     const status = existing ? existing.status : null;
     const note = existing ? (existing.note || "") : "";
