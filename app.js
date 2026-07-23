@@ -17,6 +17,7 @@ import {
   deleteDoc,
   addDoc,
   onSnapshot,
+  getDocs,
   query,
   where,
   writeBatch
@@ -308,8 +309,19 @@ staffListEl.addEventListener("click", async (e) => {
   if (!btn) return;
   const id = btn.dataset.del;
   const name = staffNameById(id);
-  if (!window.confirm(`「${name}」を削除しますか?(過去のシフト記録は残ります)`)) return;
-  await deleteDoc(doc(db, "staff", id));
+  if (!window.confirm(`「${name}」を削除しますか?この人のシフト記録・提出履歴もすべて削除されます。`)) return;
+
+  const [entriesSnap, submissionsSnap] = await Promise.all([
+    getDocs(query(entriesCol, where("staffId", "==", id))),
+    getDocs(query(submissionsCol, where("staffId", "==", id)))
+  ]);
+
+  const batch = writeBatch(db);
+  entriesSnap.forEach(d => batch.delete(d.ref));
+  submissionsSnap.forEach(d => batch.delete(d.ref));
+  batch.delete(doc(db, "staff", id));
+  await batch.commit();
+
   showToast("スタッフを削除しました");
 });
 
