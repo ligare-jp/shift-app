@@ -326,6 +326,38 @@ staffListEl.addEventListener("click", async (e) => {
 });
 
 // --------------------------------------------------------------
+// 不明スタッフ(すでに削除済みのスタッフ)に紐づく孤立データの整理
+// これより前にスタッフを削除した際に残ってしまった記録を、まとめて削除する
+// --------------------------------------------------------------
+const cleanupOrphansBtn = document.getElementById("cleanupOrphansBtn");
+cleanupOrphansBtn.addEventListener("click", async () => {
+  if (!window.confirm("スタッフ一覧に存在しない「不明」なシフトデータ・提出履歴をすべて削除します。よろしいですか?")) return;
+
+  const validIds = new Set(staffList.map(s => s.id));
+  const [entriesSnap, submissionsSnap] = await Promise.all([
+    getDocs(entriesCol),
+    getDocs(submissionsCol)
+  ]);
+
+  const toDelete = [];
+  entriesSnap.forEach(d => { if (!validIds.has(d.data().staffId)) toDelete.push(d.ref); });
+  submissionsSnap.forEach(d => { if (!validIds.has(d.data().staffId)) toDelete.push(d.ref); });
+
+  if (toDelete.length === 0) {
+    showToast("不明なデータはありませんでした");
+    return;
+  }
+
+  for (let i = 0; i < toDelete.length; i += 450) {
+    const batch = writeBatch(db);
+    toDelete.slice(i, i + 450).forEach(ref => batch.delete(ref));
+    await batch.commit();
+  }
+
+  showToast(`${toDelete.length}件の不明データを削除しました`);
+});
+
+// --------------------------------------------------------------
 // Firestore 購読: スタッフ一覧
 // --------------------------------------------------------------
 onSnapshot(staffCol, (snap) => {
