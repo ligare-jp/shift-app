@@ -49,6 +49,7 @@ const db = getFirestore(app);
 
 const staffCol = collection(db, "staff");
 const entriesCol = collection(db, "shiftEntries");
+const submissionsCol = collection(db, "submissions");
 
 // --------------------------------------------------------------
 // 状態
@@ -60,6 +61,11 @@ let currentMonth = today.getMonth(); // 0-11
 let staffList = [];              // [{id, name}]
 let monthEntries = [];           // このstate月のシフトエントリ一覧
 let unsubEntries = null;
+
+let mySubmission = null;         // 自分の当月分の提出状況
+let unsubMySubmission = null;
+let monthSubmissions = [];       // 管理者用: この月の全員の提出状況
+let unsubMonthSubmissions = null;
 
 let selectedStaffId = localStorage.getItem("shiftapp_staffId") || "";
 let isAdminUnlocked = sessionStorage.getItem("shiftapp_admin") === "1";
@@ -88,6 +94,10 @@ const modalClose = document.getElementById("modalClose");
 const modalSave = document.getElementById("modalSave");
 const modalActions = document.getElementById("modalActions");
 
+const submitShiftBtn = document.getElementById("submitShiftBtn");
+const submitStatusText = document.getElementById("submitStatusText");
+const submissionStatusList = document.getElementById("submissionStatusList");
+
 const toastEl = document.getElementById("toast");
 
 let modalDateStr = null;
@@ -114,6 +124,16 @@ function monthRange(y, m) {
   const lastDay = new Date(y, m + 1, 0).getDate();
   const end = formatDate(y, m, lastDay);
   return { start, end, lastDay };
+}
+
+function yearMonthStr() {
+  return `${currentYear}-${pad2(currentMonth + 1)}`;
+}
+
+function formatSubmittedAt(ts) {
+  if (!ts) return "";
+  const dt = new Date(ts);
+  return dt.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 function showToast(msg) {
@@ -169,6 +189,8 @@ function changeMonth(delta) {
   if (currentMonth < 0) { currentMonth = 11; currentYear--; }
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   subscribeMonthEntries();
+  subscribeMySubmission();
+  subscribeMonthSubmissions();
   renderAll();
 }
 
@@ -184,7 +206,87 @@ staffSelect.addEventListener("change", () => {
   selectedStaffId = staffSelect.value;
   localStorage.setItem("shiftapp_staffId", selectedStaffId);
   renderStaffCalendar();
+  subscribeMySubmission();
 });
+
+// --------------------------------------------------------------
+// シフト提出ボタン(スタッフ用タブ)
+// --------------------------------------------------------------
+submitShiftBtn.addEventListener("click", async () => {
+  if (!selectedStaffId) {
+    showToast("先に名前を選択してください");
+    return;
+  }
+  const ym = yearMonthStr();
+  const docId = `${selectedStaffId}__${ym}`;
+  await setDoc(doc(db, "submissions", docId), {
+    staffId: selectedStaffId,
+    staffName: staffNameById(selectedStaffId),
+    yearMonth: ym,
+    submittedAt: Date.now()
+  }, { merge: true });
+  showToast("提出しました");
+});
+
+function subscribeMySubmission() {
+  if (unsubMySubmission) unsubMySubmission();
+  mySubmission = null;
+  renderSubmitButton();
+  if (!selectedStaffId) return;
+  const ym = yearMonthStr();
+  const q = query(submissionsCol, where("staffId", "==", selectedStaffId), where("yearMonth", "==", ym));
+  unsubMySubmission = onSnapshot(q, (snap) => {
+    mySubmission = snap.empty ? null : snap.docs[0].data();
+    renderSubmitButton();
+  });
+}
+
+function renderSubmitButton() {
+  if (!selectedStaffId) {
+    submitShiftBtn.textContent = "この月のシフト希望を提出する";
+    submitShiftBtn.classList.remove("submitted");
+    submitStatusText.textContent = "";
+    return;
+  }
+  if (mySubmission) {
+    submitShiftBtn.textContent = "この月のシフト希望を再提出する";
+    submitShiftBtn.classList.add("submitted");
+    submitStatusText.textContent = `提出済み(${formatSubmittedAt(mySubmission.submittedAt)})`;
+  } else {
+    submitShiftBtn.textContent = "この月のシフト希望を提出する";
+    submitShiftBtn.classList.remove("submitted");
+    submitStatusText.textContent = "まだ提出されていません";
+  }
+}
+
+function subscribeMonthSubmissions() {
+  if (unsubMonthSubmissions) unsubMonthSubmissions();
+  const ym = yearMonthStr();
+  const q = query(submissionsCol, where("yearMonth", "==", ym));
+  unsubMonthSubmissions = onSnapshot(q, (snap) => {
+    monthSubmissions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderSubmissionStatusList();
+  });
+}
+
+function renderSubmissionStatusList() {
+  if (staffList.length === 0) {
+    submissionStatusList.innerHTML = `<li style="border:none;color:var(--muted);">まだスタッフが登録されていません。</li>`;
+    return;
+  }
+  submissionStatusList.innerHTML = staffList.map(s => {
+    const sub = monthSubmissions.find(x => x.staffId === s.id);
+    const badge = sub
+      ? `<span class="submission-badge done">提出済み ${escapeHtml(formatSubmittedAt(sub.submittedAt))}</span>`
+      : `<span class="submission-badge pending">未提出</span>`;
+    return `
+      <li class="submission-status-item">
+        <span>${escapeHtml(s.name)}</span>
+        ${badge}
+      </li>
+    `;
+  }).join("");
+}
 
 // --------------------------------------------------------------
 // スタッフ管理: 追加・削除(管理者用タブ内)
@@ -217,6 +319,7 @@ onSnapshot(staffCol, (snap) => {
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   renderStaffSelect();
   renderStaffManageList();
+  renderSubmissionStatusList();
   renderAll();
 });
 
@@ -628,6 +731,8 @@ function escapeHtml(str) {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     subscribeMonthEntries();
+    subscribeMySubmission();
+    subscribeMonthSubmissions();
     renderAll();
   }
 });

@@ -30,7 +30,7 @@
     </div>
 
     <div class="deadline-notice">
-      シフト希望の提出期限は<strong>毎月27日</strong>です。翌月分の出勤希望は期限までに入力してください。
+      シフト希望の提出期限は<strong>毎月25日</strong>です。翌々月分の出勤希望を期限までに入力してください。
     </div>
 
     <div class="calendar-header">
@@ -41,6 +41,11 @@
 
     <div class="calendar-grid" id="calendarStaff"></div>
     <p class="hint">名前を選んでから日付をクリックすると、○(出勤可能)を選べます。時間相談などがあればメモ欄に書けます。アサイン(勤務時間)が確定している日は、その時間が表示されます。</p>
+
+    <div class="submit-section">
+      <button type="button" id="submitShiftBtn" class="primary-btn submit-btn">この月のシフト希望を提出する</button>
+      <p class="submit-status" id="submitStatusText"></p>
+    </div>
   </section>
 
   <!-- 管理者用: 希望日の確認・アサイン・スタッフ管理 -->
@@ -53,6 +58,11 @@
 
     <div class="calendar-grid" id="calendarAdmin"></div>
     <p class="hint">日付をクリックすると、その日の希望者一覧とアサイン設定が開きます。</p>
+
+    <details class="panel-card staff-manage-details" open>
+      <summary>この月の提出状況</summary>
+      <ul id="submissionStatusList" class="staff-list"></ul>
+    </details>
 
     <details class="panel-card staff-manage-details">
       <summary>スタッフの追加・削除</summary>
