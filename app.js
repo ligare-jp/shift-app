@@ -654,10 +654,11 @@ function openDayModal(dateStr) {
       const timeKey = (start && end) ? `${start}-${end}` : "";
       const isPreset = TIME_PRESETS.includes(timeKey);
       const presetValue = isPreset ? timeKey : (start || end ? "custom" : TIME_PRESETS[0]);
+      const requestStatusCls = assigned ? "is-assigned" : (status ? "is-pending" : "");
       return `
         <div class="modal-row ${assigned ? "assign-on" : ""}" data-staff="${s.id}">
           <span class="staff-name">${escapeHtml(s.name)}</span>
-          <label>${statusSymbol(status)} ${statusLabel(status)}</label>
+          <label class="request-status ${requestStatusCls}" data-has-status="${status ? "1" : "0"}">${statusSymbol(status)} ${statusLabel(status)}</label>
           <label>
             <input type="checkbox" class="assign-check" ${assigned ? "checked" : ""}>
             アサイン
@@ -687,6 +688,18 @@ function openDayModal(dateStr) {
       cb.addEventListener("change", (e) => {
         const row = e.target.closest(".modal-row");
         row.classList.toggle("assign-on", e.target.checked);
+
+        const label = row.querySelector(".request-status");
+        if (label) {
+          const hasStatus = label.dataset.hasStatus === "1";
+          label.classList.remove("is-assigned", "is-pending");
+          if (e.target.checked) {
+            label.classList.add("is-assigned");
+          } else if (hasStatus) {
+            label.classList.add("is-pending");
+          }
+        }
+
         if (e.target.checked) {
           row.querySelector(".decline-check").checked = false;
         }

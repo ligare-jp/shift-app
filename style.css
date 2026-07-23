@@ -541,6 +541,16 @@ select, input[type="text"], input[type="time"] {
   font-size: 13px;
 }
 
+.request-status.is-pending {
+  color: #285f8f;
+  font-weight: 600;
+}
+
+.request-status.is-assigned {
+  color: #1f5c3f;
+  font-weight: 600;
+}
+
 .modal-row .time-inputs {
   display: none;
   flex-direction: column;
