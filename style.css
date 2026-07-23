@@ -131,6 +131,22 @@ select, input[type="text"], input[type="time"] {
   padding: 4px 0 8px;
 }
 
+.cal-dow.cal-dow-sun {
+  color: var(--danger);
+}
+
+.cal-dow.cal-dow-sat {
+  color: #2b6cb0;
+}
+
+.cal-cell.cal-sun .cal-date {
+  color: var(--danger);
+}
+
+.cal-cell.cal-sat .cal-date {
+  color: #2b6cb0;
+}
+
 .cal-cell {
   min-height: 64px;
   min-width: 0;

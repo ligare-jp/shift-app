@@ -422,12 +422,21 @@ function entriesForDate(dateStr) {
 // --------------------------------------------------------------
 function buildCalendarSkeleton(container) {
   container.innerHTML = "";
-  DOW.forEach(d => {
+  DOW.forEach((d, i) => {
     const el = document.createElement("div");
     el.className = "cal-dow";
+    if (i === 0) el.classList.add("cal-dow-sun");
+    if (i === 6) el.classList.add("cal-dow-sat");
     el.textContent = d;
     container.appendChild(el);
   });
+}
+
+function weekdayClass(y, m, d) {
+  const dow = new Date(y, m, d).getDay();
+  if (dow === 0) return "cal-sun";
+  if (dow === 6) return "cal-sat";
+  return "";
 }
 
 function renderAll() {
@@ -457,6 +466,8 @@ function renderStaffCalendar() {
 
     const cell = document.createElement("div");
     cell.className = "cal-cell";
+    const wd = weekdayClass(currentYear, currentMonth, d);
+    if (wd) cell.classList.add(wd);
     if (dateStr === todayStr) cell.classList.add("today");
     if (mine && mine.status && !mine.assigned) cell.classList.add(statusClass(mine.status));
     if (selectedStaffId) {
@@ -539,6 +550,8 @@ function renderAdminCalendar() {
 
     const cell = document.createElement("div");
     cell.className = "cal-cell clickable";
+    const wd = weekdayClass(currentYear, currentMonth, d);
+    if (wd) cell.classList.add(wd);
     if (dateStr === todayStr) cell.classList.add("today");
     cell.addEventListener("click", () => openDayModal(dateStr));
 
