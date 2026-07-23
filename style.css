@@ -621,6 +621,31 @@ select, input[type="text"], input[type="time"] {
   margin-bottom: 14px;
 }
 
+.confirmed-notice {
+  background: var(--primary-light);
+  border: 1px solid #4f9370;
+  color: #1f5c3f;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.confirmed-notice-title {
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.confirmed-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.confirmed-list li {
+  margin-bottom: 2px;
+}
+
 .setup-warning {
   background: #fff3e0;
   border: 1px solid #f0c27b;

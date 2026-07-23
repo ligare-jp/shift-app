@@ -95,6 +95,9 @@ const modalClose = document.getElementById("modalClose");
 const modalSave = document.getElementById("modalSave");
 const modalActions = document.getElementById("modalActions");
 
+const confirmedNotice = document.getElementById("confirmedNotice");
+const confirmedList = document.getElementById("confirmedList");
+
 const submitShiftBtn = document.getElementById("submitShiftBtn");
 const submitStatusText = document.getElementById("submitStatusText");
 const submissionStatusList = document.getElementById("submissionStatusList");
@@ -487,6 +490,37 @@ function renderStaffCalendar() {
 
     calendarStaff.appendChild(cell);
   }
+
+  renderConfirmedNotice();
+}
+
+// --------------------------------------------------------------
+// スタッフ用: 確定シフトのお知らせ
+// --------------------------------------------------------------
+function renderConfirmedNotice() {
+  if (!selectedStaffId) {
+    confirmedNotice.style.display = "none";
+    return;
+  }
+
+  const mine = monthEntries
+    .filter(e => e.staffId === selectedStaffId && e.assigned)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (mine.length === 0) {
+    confirmedNotice.style.display = "none";
+    return;
+  }
+
+  confirmedList.innerHTML = mine.map(e => {
+    const [y, m, d] = e.date.split("-").map(Number);
+    const dow = DOW[new Date(y, m - 1, d).getDay()];
+    const hasTime = e.startTime || e.endTime;
+    const timeLabel = hasTime ? `${shortTime(e.startTime)}-${shortTime(e.endTime)}` : "確定";
+    return `<li>${m}/${d}(${dow}) ${escapeHtml(timeLabel)}</li>`;
+  }).join("");
+
+  confirmedNotice.style.display = "block";
 }
 
 function renderAdminCalendar() {
