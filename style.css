@@ -228,9 +228,9 @@ select, input[type="text"], input[type="time"] {
 }
 
 .badge.status-avail {
-  background: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid var(--primary);
+  background: #e7f1fb;
+  color: #285f8f;
+  border: 1px solid #5b8fbd;
 }
 
 .badge.status-unavail {
@@ -246,9 +246,10 @@ select, input[type="text"], input[type="time"] {
 }
 
 .badge.assigned {
-  background: var(--primary);
-  color: #fff;
-  border: 1px solid var(--primary);
+  background: var(--primary-light);
+  color: #1f5c3f;
+  border: 1px solid #4f9370;
+  font-weight: 700;
 }
 
 .badge.declined {

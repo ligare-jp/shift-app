@@ -520,7 +520,8 @@ function renderAdminCalendar() {
         const name = staffNameById(e.staffId);
         const short = name.length > 3 ? name.slice(0, 3) : name;
         const cls = e.declined ? "declined" : (e.assigned ? "assigned" : statusClass(e.status));
-        const symbol = e.declined ? "" : statusSymbol(e.status);
+        // アサイン確定は✓、まだ希望段階のものは○/△のままにして見分けやすくする
+        const symbol = e.declined ? "" : (e.assigned ? "✓" : statusSymbol(e.status));
         const noteCls = e.note ? "has-note" : "";
         const noteIcon = e.note ? noteIconSvg(9) : "";
         return `<span class="badge ${cls} ${noteCls}">${symbol}${escapeHtml(short)}${noteIcon}</span>`;
