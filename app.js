@@ -706,13 +706,21 @@ function openDayModal(dateStr) {
       const requestStatusCls = assigned ? "is-assigned" : (status ? "is-pending" : "");
       return `
         <div class="modal-row ${assigned ? "assign-on" : ""}" data-staff="${s.id}">
-          <span class="staff-name">${escapeHtml(s.name)}</span>
-          <label class="request-status ${requestStatusCls}" data-has-status="${status ? "1" : "0"}">${statusSymbol(status)} ${statusLabel(status)}</label>
-          <label>
-            <input type="checkbox" class="assign-check" ${assigned ? "checked" : ""}>
-            アサイン
-          </label>
-          <span class="time-inputs">
+          <div class="row-top">
+            <span class="staff-name">${escapeHtml(s.name)}</span>
+            <label class="request-status ${requestStatusCls}" data-has-status="${status ? "1" : "0"}">${statusSymbol(status)} ${statusLabel(status)}</label>
+          </div>
+          <div class="row-controls">
+            <label class="control-check">
+              <input type="checkbox" class="assign-check" ${assigned ? "checked" : ""}>
+              アサイン
+            </label>
+            <label class="control-check">
+              <input type="checkbox" class="decline-check" ${declined ? "checked" : ""}>
+              見送り(出勤なし)
+            </label>
+          </div>
+          <div class="time-inputs">
             <select class="time-preset">
               <option value="08:30-14:00" ${presetValue === "08:30-14:00" ? "selected" : ""}>8:30-14:00</option>
               <option value="14:45-20:00" ${presetValue === "14:45-20:00" ? "selected" : ""}>14:45-20:00</option>
@@ -723,13 +731,9 @@ function openDayModal(dateStr) {
               〜
               <input type="time" class="end-time" value="${end}">
             </span>
-          </span>
-          <label>
-            <input type="checkbox" class="decline-check" ${declined ? "checked" : ""}>
-            見送り(出勤なし)
-          </label>
+          </div>
+          ${note ? `<div class="staff-note">${noteIconSvg(13)} ${escapeHtml(note)}</div>` : ""}
         </div>
-        ${note ? `<div class="staff-note" style="margin:-2px 0 8px;">${noteIconSvg(13)} ${escapeHtml(note)}</div>` : ""}
       `;
     }).join("");
 
