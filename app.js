@@ -175,7 +175,7 @@ tabsNav.addEventListener("click", (e) => {
   const tab = btn.dataset.tab;
 
   if (tab === "admin" && !isAdminUnlocked) {
-    const pin = window.prompt("管理者用の暗証番号(PIN)を入力してください");
+    const pin = window.prompt("管理者の暗証番号(PIN)を入力してください");
     if (pin === null) return;
     if (pin !== ADMIN_PIN) {
       showToast("暗証番号が違います");
