@@ -97,6 +97,7 @@ const modalActions = document.getElementById("modalActions");
 
 const confirmedNotice = document.getElementById("confirmedNotice");
 const confirmedList = document.getElementById("confirmedList");
+const confirmedCount = document.getElementById("confirmedCount");
 
 const submitShiftBtn = document.getElementById("submitShiftBtn");
 const submitStatusText = document.getElementById("submitStatusText");
@@ -523,6 +524,7 @@ function renderConfirmedNotice() {
     return;
   }
 
+  confirmedCount.textContent = mine.length;
   confirmedList.innerHTML = mine.map(e => {
     const [y, m, d] = e.date.split("-").map(Number);
     const dow = DOW[new Date(y, m - 1, d).getDay()];

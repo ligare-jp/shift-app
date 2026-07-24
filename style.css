@@ -650,12 +650,19 @@ select, input[type="text"], input[type="time"] {
 
 .confirmed-notice-title {
   font-weight: 700;
-  margin: 0 0 4px;
+  cursor: pointer;
+  list-style: revert;
+}
+
+.confirmed-notice[open] .confirmed-notice-title {
+  margin-bottom: 6px;
 }
 
 .confirmed-list {
-  margin: 0;
+  margin: 4px 0 0;
   padding-left: 18px;
+  max-height: 180px;
+  overflow-y: auto;
 }
 
 .confirmed-list li {

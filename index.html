@@ -33,10 +33,10 @@
       シフト希望の提出期限は<strong>毎月25日</strong>です。翌々月分の出勤希望を期限までに入力してください。
     </div>
 
-    <div class="confirmed-notice" id="confirmedNotice" style="display:none;">
-      <p class="confirmed-notice-title">この月の確定シフト</p>
+    <details class="confirmed-notice" id="confirmedNotice" style="display:none;">
+      <summary class="confirmed-notice-title">この月の確定シフト(<span id="confirmedCount">0</span>件)</summary>
       <ul id="confirmedList" class="confirmed-list"></ul>
-    </div>
+    </details>
 
     <div class="calendar-header">
       <button class="month-nav" id="prevMonthStaff" aria-label="前の月">&#8592;</button>
@@ -45,7 +45,11 @@
     </div>
 
     <div class="calendar-grid" id="calendarStaff"></div>
-    <p class="hint">名前を選んでから日付をクリックすると、○(出勤可能)を選べます。時間相談などがあればメモ欄に書けます。アサイン(勤務時間)が確定している日は、その時間が表示されます。</p>
+    <p class="hint">
+      名前を選んでから日付をクリックすると、○(出勤可能)を選べます。<br>
+      時間相談などがあればメモ欄に書けます。<br>
+      アサイン(勤務時間)が確定している日は、その時間が表示されます。
+    </p>
 
     <div class="submit-section">
       <button type="button" id="submitShiftBtn" class="primary-btn submit-btn">この月のシフト希望を提出する</button>
